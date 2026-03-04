@@ -1,11 +1,26 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-torch>=1.7.0
-torchvision>=0.9.1
-omegaconf>=2.0.6
-onnx>=1.7.0
-pandas>=1.2.2
-pyyaml>=5.3.1
+# formerly requirements-3.7.txt, this file is here for compatibility with setup.py
+# you should install dependencies with requirements-3.7.txt and then run setup.py install
+# or even better, comment out the dependencies in setup.py
+
+# you may see `ValueError: CrypTen does not support ONNX xxx` if onnx version mismatch
+# see https://github.com/facebookresearch/CrypTen/issues/418#issuecomment-1281424400 and https://github.com/facebookresearch/CrypTen/issues/455#issuecomment-1913416136
+# crypten/nn/onnx_converter.py: _OPSET_VERSION = 11
+
+# since we changed sklearn's name to scikit-learn in requirements.txt, this varible is now useless
+# export SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
+
+# these settings breaks setup.py install, but we still need them
+# you dont want a 20G cuda toolkit just for installing torch, do you?
+# -i https://mirrors.aliyun.com/pypi/simple/
+# -f https://mirrors.aliyun.com/pytorch-wheels/cpu
+
+torch==1.8.1
+torchvision==0.9.1
+omegaconf==2.0.6
+onnx==1.7.0
+pandas==1.2.2
+pyyaml==5.3.1
 tensorboard
 future
-scipy>=1.6.0
+scipy==1.6.0
 scikit-learn
