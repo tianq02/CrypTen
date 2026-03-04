@@ -8,11 +8,14 @@
 import logging
 import warnings
 from collections import OrderedDict
+from typing import Optional
 
 import crypten
 import torch
 import torch.onnx.symbolic_helper as sym_help
 from crypten.common.functions.pooling import _adaptive_pool2d_helper
+
+debug: Optional[str] = "verbose" # None:no debug, "verbose": print module init params, else: print module init only
 
 
 class Module:
@@ -25,6 +28,9 @@ class Module:
     SUPPORTS_PLAINTEXT_INPUTS = False
 
     def __init__(self):
+        if debug is not None:
+            print(f"Initializing {self.__class__.__name__}")
+
         self._parameters = OrderedDict()
         self._buffers = OrderedDict()
         self._modules = OrderedDict()
@@ -621,6 +627,11 @@ class Graph(Container):
         Optionally, `modules` and the `graph` structure can be specified as well.
         Alternatively, the graph can be built up using the `add_module` function.
         """
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with input_names: {input_names}, output_names: {output_names}, modules: {modules}, graph: {graph}")
         super().__init__()
         if not isinstance(input_names, (list, tuple)):
             input_names = [input_names]
@@ -764,6 +775,12 @@ class Sequential(Graph):
     """
 
     def __init__(self, *module_list, input_names=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with module_list: {module_list}, input_names: {input_names}")
+
         if input_names is None:
             input_names = ["input"]
         super().__init__(input_names, "output")
@@ -813,6 +830,12 @@ class ModuleList(Module):
     """
 
     def __init__(self, modules=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with modules: {modules}")
+
         super(ModuleList, self).__init__()
         if modules is not None:
             self += modules
@@ -894,6 +917,12 @@ class ModuleDict(Module):
     """
 
     def __init__(self, modules=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with modules: {modules}")
+
         super(ModuleDict, self).__init__()
         if modules is not None:
             self.update(modules)
@@ -932,6 +961,12 @@ class Parameter(Module):
     """
 
     def __init__(self, param, trainable=True):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with param: {param}, trainable: {trainable}")
+
         super().__init__()
 
         # ensure that input is a PyTorch or CrypTen tensor:
@@ -969,6 +1004,12 @@ class Constant(Module):
     SUPPORTS_PLAINTEXT_INPUTS = True
 
     def __init__(self, value):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with value: {value}")
+
         super().__init__()
         if not torch.is_tensor(value):
             value = torch.tensor(value)
@@ -1000,6 +1041,11 @@ class ConstantOfShape(Module):
     SUPPORTS_PLAINTEXT_INPUTS = True
 
     def __init__(self, value):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with value: {value}")
         super().__init__()
         if not torch.is_tensor(value):
             value = torch.tensor(value)
@@ -1152,6 +1198,11 @@ class _Reduce(Module):
     """
 
     def __init__(self, dim, keepdim=False, reduction_fn="mean"):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dim: {dim}, keepdim: {keepdim}, reduction_fn: {reduction_fn}")
         super().__init__()
         self.dim = dim
         self.keepdim = keepdim
@@ -1171,6 +1222,12 @@ class Mean(_Reduce):
     """
 
     def __init__(self, dim, keepdim=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dim: {dim}, keepdim: {keepdim}")
+
         super().__init__(dim, keepdim, "mean")
 
     @staticmethod
@@ -1191,6 +1248,11 @@ class Sum(_Reduce):
     """
 
     def __init__(self, dim, keepdim=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dim: {dim}, keepdim: {keepdim}")
         super().__init__(dim, keepdim, "sum")
 
     @staticmethod
@@ -1214,6 +1276,11 @@ class Transpose(Module):
     """
 
     def __init__(self, perm):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with perm: {perm}")
         super().__init__()
         self.perm = perm
 
@@ -1258,6 +1325,11 @@ class Squeeze(Module):
     """
 
     def __init__(self, dimension):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dimension: {dimension}")
         super().__init__()
         if isinstance(dimension, (list, tuple)):
             assert len(dimension) == 1, "can only squeeze one dimension at a time"
@@ -1294,6 +1366,11 @@ class Unsqueeze(Module):
     SUPPORTS_PLAINTEXT_INPUTS = True
 
     def __init__(self, dimension):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dimension: {dimension}")
         super().__init__()
         if isinstance(dimension, (list, tuple)):
             assert len(dimension) == 1, "can only squeeze one dimension at a time"
@@ -1328,6 +1405,11 @@ class Slice(Module):
     """
 
     def __init__(self, starts, ends, axes=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with starts: {starts}, ends: {ends}, axes: {axes}")
         super().__init__()
         self.starts = starts
         self.ends = ends
@@ -1403,6 +1485,11 @@ class Cast(Module):
     """
 
     def __init__(self, dtype):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dtype: {dtype}")
         super().__init__()
         self.dtype = dtype
 
@@ -1479,6 +1566,11 @@ class Flatten(Module):
     """
 
     def __init__(self, axis=1):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with axis: {axis}")
         super().__init__()
         self.axis = axis
 
@@ -1513,6 +1605,11 @@ class Shape(Module):
     SUPPORTS_PLAINTEXT_INPUTS = True
 
     def __init__(self, dim=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dim: {dim}")
         super().__init__()
         self.dim = dim
 
@@ -1538,6 +1635,11 @@ class Concat(Module):
     """
 
     def __init__(self, dimension):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dimension: {dimension}")
         super().__init__()
         self.dimension = dimension
 
@@ -1574,6 +1676,11 @@ class Reshape(Module):
     """
 
     def __init__(self, shape=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with shape: {shape}")
         super(Reshape, self).__init__()
         self.shape = shape
 
@@ -1611,6 +1718,11 @@ class Dropout(Module):
     """
 
     def __init__(self, p=0.5, inplace=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with p: {p}, inplace: {inplace}")
         super().__init__()
         if inplace:
             logging.warning(
@@ -1640,6 +1752,11 @@ class DropoutNd(Module):
     """
 
     def __init__(self, p=0.5, inplace=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with p: {p}, inplace: {inplace}")
         super().__init__()
         if inplace:
             logging.warning(
@@ -1724,6 +1841,11 @@ class Gather(Module):
     SUPPORTS_PLAINTEXT_INPUTS = True
 
     def __init__(self, dimension, indices=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dimension: {dimension}, indices: {indices}")
         super().__init__()
         self.dimension = dimension
         self.indices = indices
@@ -1775,6 +1897,11 @@ class _ConstantPad(Module):
     """
 
     def __init__(self, padding, value, ndims, mode="constant"):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with padding: {padding}, value: {value}, ndims: {ndims}, mode: {mode}")
         super().__init__()
         if isinstance(padding, (int)):
             padding = [padding, padding] * ndims
@@ -1805,6 +1932,11 @@ class ConstantPad1d(_ConstantPad):
     """
 
     def __init__(self, padding, value, mode="constant"):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with padding: {padding}, value: {value}, mode: {mode}")
         super(ConstantPad1d, self).__init__(padding, value, 1, mode=mode)
 
 
@@ -1814,6 +1946,11 @@ class ConstantPad2d(_ConstantPad):
     """
 
     def __init__(self, padding, value, mode="constant"):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with padding: {padding}, value: {value}, mode: {mode}")
         super(ConstantPad2d, self).__init__(padding, value, 2, mode=mode)
 
 
@@ -1823,6 +1960,11 @@ class ConstantPad3d(_ConstantPad):
     """
 
     def __init__(self, padding, value, mode="constant"):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with padding: {padding}, value: {value}, mode: {mode}")
         super(ConstantPad3d, self).__init__(padding, value, 3, mode=mode)
 
 
@@ -1834,6 +1976,11 @@ class Gemm(Module):
     """
 
     def __init__(self, alpha=1.0, beta=1.0, trans_a=False, trans_b=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with alpha: {alpha}, beta: {beta}, trans_a: {trans_a}, trans_b: {trans_b}")
         super().__init__()
         self.alpha = alpha
         self.beta = beta
@@ -1883,6 +2030,11 @@ class Linear(Module):
     """  # noqa: W605
 
     def __init__(self, in_features, out_features, bias=True):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with in_features: {in_features}, out_features: {out_features}, bias: {bias}")
         super().__init__()
 
         # initialize model parameters:
@@ -1931,6 +2083,11 @@ class MatMul(Module):
     """
 
     def __init__(self, weight=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with weight: {weight}")
         super().__init__()
         if weight is not None:
             self.register_parameter("weight", weight)
@@ -1956,6 +2113,11 @@ class Conv(Module):
     """
 
     def __init__(self, stride, padding, dilation, groups=1):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with stride: {stride}, padding: {padding}, dilation: {dilation}, groups: {groups}")
         super().__init__()
         self.stride = stride
         self.padding = padding
@@ -2034,8 +2196,7 @@ class Conv1d(Module):
     planes.
 
     In the simplest case, the output value of the layer with input size
-    :math:`(N, C_{\text{in}}, L)` and output :math:`(N, C_{\text{out}}, L_{\text{out}})`
-    can be precisely described as:
+    :math:`(N, C_{\text{in}}, L)` and output :math:`(N, C_{\text{out}}, L_{\text{out}})` can be precisely described as:
 
     .. math::
         \text{out}(N_i, C_{\text{out}_j}) = \text{bias}(C_{\text{out}_j}) +
@@ -2119,10 +2280,13 @@ class Conv1d(Module):
         groups=1,
         bias=True,
     ):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with in_channels: {in_channels}, out_channels: {out_channels}, kernel_size: {kernel_size}, stride: {stride}, padding: {padding}, dilation: {dilation}, groups: {groups}, bias: {bias}")
         # check inputs:
         super().__init__()
-        assert isinstance(stride, int), "stride must be an integer"
-        assert isinstance(padding, int), "padding must be an integer"
 
         # initialize model parameters:
         pytorch_module = torch.nn.Conv1d(
@@ -2257,6 +2421,11 @@ class Conv2d(Module):
         groups=1,
         bias=True,
     ):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with in_channels: {in_channels}, out_channels: {out_channels}, kernel_size: {kernel_size}, stride: {stride}, padding: {padding}, dilation: {dilation}, groups: {groups}, bias: {bias}")
         # check inputs:
         super().__init__()
 
@@ -2304,6 +2473,11 @@ class ReLU(Module):
     """
 
     def __init__(self, inplace=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with inplace: {inplace}")
         super().__init__()
         if inplace:
             logging.warning("CrypTen ReLU module does not support inplace computation.")
@@ -2354,6 +2528,11 @@ class Hardtanh(Module):
     """
 
     def __init__(self, min_val=-1.0, max_val=1.0, inplace=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with min_val: {min_val}, max_val: {max_val}, inplace: {inplace}")
         super().__init__()
         self.min_val = min_val
         self.max_val = max_val
@@ -2402,6 +2581,11 @@ class ReLU6(Hardtanh):
     """
 
     def __init__(self, inplace=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with inplace: {inplace}")
         if inplace:
             logging.warning(
                 "CrypTen ReLU6 module does not support inplace computation."
@@ -2449,6 +2633,11 @@ class Softmax(Module):
     """
 
     def __init__(self, dim):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dim: {dim}")
         super().__init__()
         self.dim = dim
 
@@ -2485,6 +2674,11 @@ class LogSoftmax(Module):
     """
 
     def __init__(self, dim):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with dim: {dim}")
         super().__init__()
         self.dim = dim
 
@@ -2529,6 +2723,11 @@ class _Pool2d(Module):
     """
 
     def __init__(self, pool_type, kernel_size, stride=None, padding=0, ceil_mode=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with pool_type: {pool_type}, kernel_size: {kernel_size}, stride: {stride}, padding: {padding}, ceil_mode: {ceil_mode}")
         super().__init__()
         self.pool_type = pool_type
         self.kernel_size = kernel_size
@@ -2623,6 +2822,11 @@ class AvgPool2d(_Pool2d):
     """
 
     def __init__(self, kernel_size, stride=None, padding=0, ceil_mode=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with kernel_size: {kernel_size}, stride: {stride}, padding: {padding}, ceil_mode: {ceil_mode}")
         super().__init__(
             "average", kernel_size, stride=stride, padding=padding, ceil_mode=ceil_mode
         )
@@ -2638,6 +2842,11 @@ class MaxPool2d(_Pool2d):
     """
 
     def __init__(self, kernel_size, stride=None, padding=0, ceil_mode=False):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with kernel_size: {kernel_size}, stride: {stride}, padding: {padding}, ceil_mode: {ceil_mode}")
         super().__init__(
             "max", kernel_size, stride=stride, padding=padding, ceil_mode=ceil_mode
         )
@@ -2675,6 +2884,11 @@ class AdaptiveAvgPool2d(Module):
     """
 
     def __init__(self, output_size=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with output_size: {output_size}")
         super(AdaptiveAvgPool2d, self).__init__()
         self.output_size = output_size
 
@@ -2728,6 +2942,11 @@ class AdaptiveMaxPool2d(Module):
     """
 
     def __init__(self, output_size=None):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with output_size: {output_size}")
         super(AdaptiveMaxPool2d, self).__init__()
         self.output_size = output_size
 
@@ -2787,6 +3006,11 @@ class BatchNormalization(Module):
     """
 
     def __init__(self, eps=1e-05, momentum=0.1):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with eps: {eps}, momentum: {momentum}")
         super().__init__()
         self.eps = eps
         self.momentum = momentum
@@ -2850,6 +3074,11 @@ class _BatchNorm(Module):
     """
 
     def __init__(self, num_features, eps=1e-05, momentum=0.1):
+        if debug is not None:
+            if debug != "verbose":
+                print(f"Initializing {self.__class__.__name__}")
+            else:
+                print(f"Initializing {self.__class__.__name__} with num_features: {num_features}, eps: {eps}, momentum: {momentum}")
         super().__init__()
 
         # initialize model parameters and buffers:
