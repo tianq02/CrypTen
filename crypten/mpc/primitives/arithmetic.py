@@ -23,6 +23,7 @@ from . import beaver, replicated  # noqa: F401
 
 SENTINEL = -1
 
+DEBUG = False
 
 # MPC tensor where shares additive-sharings.
 class ArithmeticSharedTensor:
@@ -61,6 +62,9 @@ class ArithmeticSharedTensor:
         The parties can also set the `precision` and `device` for their share of
         the tensor. If `device` is unspecified, it is set to `tensor.device`.
         """
+
+        if DEBUG:
+            print(f"rank: {self.rank}, ASS Tensor __init__(tensor={tensor}, src={src})")
 
         # do nothing if source is sentinel:
         if src == SENTINEL:
@@ -102,6 +106,9 @@ class ArithmeticSharedTensor:
         self.share = ArithmeticSharedTensor.PRZS(size, device=device).share
         if self.rank == src:
             self.share += tensor
+
+        if DEBUG:
+            print(f"rank: {self.rank}, share={self.share}")
 
     @staticmethod
     def new(*args, **kwargs):
