@@ -169,6 +169,9 @@ class ArithmeticSharedTensor:
         This function does so by generating `n` numbers across `n` parties with
         each number being held by exactly 2 parties. One of these parties adds
         this number while the other subtracts this number.
+
+        tianq: 环形PRZS，每一方自己生成随机数并传给下一方，持有份额=自己的随机数-收到的随机数
+        tianq: 两方时，互相知道对方的份额（毕竟相加为0）；三方及以上时，互相不知道份额
         """
         from crypten import generators
 
@@ -182,6 +185,13 @@ class ArithmeticSharedTensor:
         current_share = generate_random_ring_element(*size, generator=g0, device=device)
         next_share = generate_random_ring_element(*size, generator=g1, device=device)
         tensor.share = current_share - next_share
+
+        if DEBUG:
+            import time
+            if comm.get().get_rank()!=0:
+                time.sleep(0.01)
+            print("rank: ", comm.get().get_rank(), "current_share: ", current_share, "next_share: ", next_share, "tensor.share: ", tensor.share)
+
         return tensor
 
     @staticmethod
