@@ -1,5 +1,6 @@
+import time
 import torch
-from numpy import dtype
+from torch.fx.proxy import orig_method_name
 
 import crypten
 import crypten.mpc as mpc
@@ -10,8 +11,8 @@ from crypten.mpc.primitives import ArithmeticSharedTensor
 
 crypten.init()
 
-def pt_przs(size, world_size=3):
 
+def pt_przs(size, world_size=3):
     # shape: [..., world_size]
     # rnd = torch.randn(world_size, *size)
     from crypten.common.rng import generate_random_ring_element
@@ -28,32 +29,34 @@ def pt_przs(size, world_size=3):
 
     return pt_shares
 
+
 def pt_share(tensor: torch.Tensor, world_size=3):
     shares = pt_przs(tensor.size(), world_size)
-    shares[0] += tensor * 65536  # 65536: simulate scaling in og cryptensor
+    # edit: seems like it doesn't need a manual scale
+    # shares[0] += tensor * 65536  # 65536: simulate scaling in og cryptensor
+    shares[0] += tensor
     return shares
 
-@mpc.run_multiprocess(world_size=2)
-def test_load_share():
-    rank = comm.get().get_rank()
 
+@mpc.run_multiprocess(world_size=3)
+def test_load_share(generated_shares: torch.Tensor):
     # 模拟从客户端接收的份额
-    mock_shares = [
-        torch.tensor([100, 200, 300]),  # S0 的份额
-        torch.tensor([-100, -200, -300])  # S1 的份额 (互补)
-    ]
+    # mock_shares = [
+    #     torch.tensor([100, 200, 300]),  # S0 的份额
+    #     torch.tensor([-100, -200, -300])  # S1 的份额 (互补)
+    # ]
+    rank = comm.get().get_rank()
+    x = ArithmeticSharedTensor.from_shares(generated_shares[rank])
+    time.sleep(rank / 100)
+    local_share=x.share
+    print(f"Rank {rank}: share = {local_share}")
 
-    x = ArithmeticSharedTensor.from_shares(mock_shares[rank])
-    print(f"Rank {rank}: share = {x.share}")
-
-    # 解密验证
+    # 解密验证，注意reveal必须各方一起执行
     revealed = x.reveal()
-    print(f"Rank {rank}: revealed = {revealed}")  # 应该接近 [0, 0, 0]
+    if rank == 0:
+        print(f"revealed = {revealed}")  # 应该接近 [0, 0, 0]
 
-if __name__ == '__main__':
-    test_load_share()
-
-
+    return x.share.numpy()
 
 @mpc.run_multiprocess(world_size=3)
 def get_shares():
@@ -75,6 +78,7 @@ def get_shares():
     # Return the raw underlying share back to the main process
     return rank, x_enc.share.numpy()
 
+
 @mpc.run_multiprocess(world_size=3)
 def get_share_outsourced():
     rank = comm.get().get_rank()
@@ -93,18 +97,27 @@ if __name__ == '__main__1':
     # You can even manually add them together to see the original fixed-point values (65536, 131072...)
     print("Sum & Scale:", sum(s for r, s in shares) / 65536)
 
-
 # test code for outsourced ASS
 if __name__ == '__main__2':
-
     shares = pt_przs([3])
 
     print(shares)
     print(shares[0])
     print(shares.sum(dim=0))
 
-    arr = np.array([1,2,3],dtype=np.longlong)
-    share2 = pt_share(torch.tensor(arr),3)
+    arr = np.array([1, 2, 3], dtype=np.longlong)
+    share2 = pt_share(torch.tensor(arr), 3)
 
     print(share2)
     print(share2.sum(dim=0))
+
+if __name__ == '__main__':
+    orig_tensor = torch.tensor([1,2,3],dtype=torch.int64)
+    print("orig:",orig_tensor)
+    shares = pt_share(orig_tensor, world_size=3)
+    print("pt shares: ")
+    print(shares)
+    share_ex = test_load_share(shares)
+    print("share sum:", sum(share_ex))
+
+    # yay! seems like what we send actually became the share!
